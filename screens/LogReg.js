@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { StyleSheet, Text, TextInput, View, Button, TouchableOpacity, SafeAreaView, StatusBar, Image, Keyboard, ScrollView } from 'react-native'
+import { StyleSheet, Text, TextInput, View, Button, TouchableOpacity, StatusBar, Image, Keyboard, ScrollView } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 
-// Import firebase
-import { auth, provider, firestore } from '../firebase';
-import { doc, setDoc, getDoc, getFirestore } from "firebase/firestore";
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+// Import Auth Service
+import { loginUser, registerUser, getCurrentUser } from '../utils/AuthService';
 
 // Import the custom CSS
 import styles from '../assets/stylesheet';
@@ -41,90 +39,68 @@ function LogReg() {
     // data usestate
     const [isChecked, setIsChecked] = useState(false);
 
-    // firebase auth
-    // const auth = getAuth();
-
-    // useEffect(() => {
-    //     const unsubscribe = auth.onAuthStateChanged((user) => {
-    //         // wait for login or register
-    //         if (user) {
-    //             navigation.navigate('Tab');
-    //         } else {
-    //             navigation.navigate('LogReg');
-    //         }
-    //     });
-    //     return unsubscribe;
-    // }, []);
-
+    // Kiểm tra trạng thái đăng nhập khi component mount
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((authUser) => {
-            if (authUser) {
-                const user = auth.currentUser;
-                const db = firestore;
-                const docRef = doc(db, "userList", user.uid);
-                getDoc(docRef).then((docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        AsyncStorage.setItem('userData', JSON.stringify(data));
-                        console.log(67, data);
-                        if (data.name) {
-                            navigation.navigate('Tab');
-                        } else {
-                            navigation.navigate('LogReg');
-                        }
-                    } else {
-                    }
-                });
-            }
-        });
-        return unsubscribe;
+        checkAuthStatus();
     }, []);
 
-    const signIn = () => {
-        if (isChecked) {
-            signInWithEmailAndPassword(auth, loginEmail, loginPassword)
-                .catch((error) => alert(error));
-        } else {
+    const checkAuthStatus = async () => {
+        const user = await getCurrentUser();
+        if (user && user.name) {
+            navigation.navigate('Tab');
+        }
+    };
+
+    const signIn = async () => {
+        if (!isChecked) {
             alert('Bạn chưa đồng ý với điều khoản của chúng tôi');
+            return;
+        }
+
+        if (!loginEmail || !loginPassword) {
+            alert('Vui lòng nhập đầy đủ thông tin');
+            return;
+        }
+
+        setIsLoggingIn(true);
+        const result = await loginUser(loginEmail, loginPassword);
+        setIsLoggingIn(false);
+
+        if (result.success) {
+            navigation.navigate('Tab');
+        } else {
+            alert(result.error || 'Đăng nhập thất bại');
         }
     }
 
-    const register = () => {
-        if (isChecked) {
-            createUserWithEmailAndPassword(auth, registerEmail, registerPassword)
-                .then((authUser) => {
-                    setDoc(doc(firestore, "userList", authUser.user.uid), {
-                        name: name,
-                        email: registerEmail,
-                        password: registerPassword,
-                        phone: phone,
-                        disable: [...disable.split(',')].map(item => item.trim()),
-                        type: "user",
-                        joinDate: new Date().toLocaleDateString(),
-                        intro: "",
-                        exp: [],
-                        id: authUser.user.uid,
-                        dob: null,
-                        sex: null,
-                        address: '',
-                        intro: '',
-                        major: '',
-                        exp: [],
-                        image: [],
-                        education: '',
-                        wishness: '',
-                        jobSave: [],
-                        skill: [],
-                        isAvailable: true,
-                        letCompanyContact: true,
-                        jobAttempt: [],
-                        followCompany: [],
-                        companyViewCount: 0,
-                    })
-                })
-                .catch((error) => alert(error));
-        } else {
+    const register = async () => {
+        if (!isChecked) {
             alert('Bạn chưa đồng ý với điều khoản của chúng tôi');
+            return;
+        }
+
+        if (!name || !registerEmail || !registerPassword || !phone) {
+            alert('Vui lòng nhập đầy đủ thông tin');
+            return;
+        }
+
+        setIsLoggingIn(true);
+        const userData = {
+            name: name,
+            email: registerEmail,
+            password: registerPassword,
+            phone: phone,
+            disable: disable ? [...disable.split(',')].map(item => item.trim()) : [],
+        };
+
+        const result = await registerUser(userData);
+        setIsLoggingIn(false);
+
+        if (result.success) {
+            alert('Đăng ký thành công!');
+            navigation.navigate('Tab');
+        } else {
+            alert(result.error || 'Đăng ký thất bại');
         }
     }
 
@@ -288,7 +264,7 @@ function LogReg() {
     }
 
     return (
-        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.white, overflow: 'hidden' }]}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.white }]} edges={['top', 'left', 'right']}>
             <StatusBar
                 currentHeight={200}
                 animated={true}

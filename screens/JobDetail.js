@@ -1,6 +1,7 @@
 import { colorStyle, useCustomFonts } from "../assets/componentStyleSheet";
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, SafeAreaView, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, ScrollView, TouchableOpacity } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from "expo-linear-gradient";
 import { vw, vh, vmax, vmin } from "react-native-expo-viewport-units";
 import componentStyle from "../assets/componentStyleSheet";
@@ -19,7 +20,7 @@ function JobDetail({ route, navigation }) {
     const [isDone, setIsDone] = React.useState(false);
     return (
         <View style={[styles.flex1, styles.h100vh]}>
-            <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue3 }]}>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue3 }]} edges={['top', 'left', 'right']}>
                 <StatusBar backgroundColor={colorStyle.white} barStyle="dark-content" />
                 <LinearGradient
                     colors={['#E2EAFF', '#FFE7AB']}

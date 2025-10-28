@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, Button, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+import { View, Text, Button, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { colorStyle, useCustomFonts } from "../assets/componentStyleSheet";

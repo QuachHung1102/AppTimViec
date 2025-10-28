@@ -1,6 +1,7 @@
 import { colorStyle, useCustomFonts } from "../assets/componentStyleSheet";
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, SafeAreaView, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, ScrollView } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from "expo-linear-gradient";
 import { vw, vh, vmax, vmin } from "react-native-expo-viewport-units";
 import componentStyle from "../assets/componentStyleSheet";
@@ -13,7 +14,7 @@ import { homeIcon } from "../assets/svgXml";
 function Home({ navigation }) {
 
     return (
-        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue1 }]}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue1 }]} edges={['top', 'left', 'right']}>
             <StatusBar backgroundColor={colorStyle.blue1} barStyle="dark-content" />
 
             {searchNav('Trang chủ', homeIcon(vw(9), vw(9)), colorStyle.blue3, () => { }, colorStyle.blue1)}

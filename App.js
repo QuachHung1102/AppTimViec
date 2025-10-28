@@ -1,5 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import React from "react";
 
@@ -19,19 +20,21 @@ const Stack = createNativeStackNavigator();
 export default function App() {
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="PreLoad" component={PreLoad} />
-        <Stack.Screen name="LogReg" component={LogReg} />
-        <Stack.Screen name="Tab" component={Tab} />
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="User" component={User} />
-        <Stack.Screen name="Setting" component={Setting} />
-        <Stack.Screen name="Notification" component={Notification} />
-        <Stack.Screen name="NewJob" component={NewJob} />
-        <Stack.Screen name="JobDetail" component={JobDetail} />
-        <Stack.Screen name="CompanyDetail" component={CompanyDetail} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="PreLoad" component={PreLoad} />
+          <Stack.Screen name="LogReg" component={LogReg} />
+          <Stack.Screen name="Tab" component={Tab} />
+          <Stack.Screen name="Home" component={Home} />
+          <Stack.Screen name="User" component={User} />
+          <Stack.Screen name="Setting" component={Setting} />
+          <Stack.Screen name="Notification" component={Notification} />
+          <Stack.Screen name="NewJob" component={NewJob} />
+          <Stack.Screen name="JobDetail" component={JobDetail} />
+          <Stack.Screen name="CompanyDetail" component={CompanyDetail} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

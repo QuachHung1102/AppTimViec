@@ -1,77 +1,32 @@
-import { doc, getDoc } from "firebase/firestore";
 import React, { useState, useEffect } from 'react';
-import { auth, firestore } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getCurrentUser } from '../utils/AuthService';
 
+// Helper function để lấy user data
 export const fetchUserData = async () => {
     try {
-        const user = auth.currentUser;
-
+        const user = await getCurrentUser();
         if (user) {
-            const db = firestore;
-            const docRef = doc(db, "userList", user.uid);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                // Save data to AsyncStorage
-                try {
-                    await AsyncStorage.setItem('userData', JSON.stringify(docSnap.data()));
-                    return docSnap.data();
-                } catch (error) {
-                    console.error('JSON string is invalid:', error.message);
-                }
-            }
-        } else {
-            console.log("No user is currently signed in.");
+            await AsyncStorage.setItem('userData', JSON.stringify(user));
+            return user;
         }
+        return null;
     } catch (error) {
-        console.error("Error fetching document:", error);
+        console.error("Error fetching user data:", error);
+        return null;
     }
-    return null;
 };
-// fetchUserData();
-
-function isValidJson(jsonString) {
-    try {
-        JSON.parse(jsonString);
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
 
 export const completeURIforImage = (imageURI) => {
-    if (imageURI === null || imageURI === undefined || imageURI === '') {
+    if (!imageURI) {
         return require('../assets/images/placeholder.jpg');
-    } else {
-        return { uri: `${imageURI}` };
     }
+    return { uri: imageURI };
 }
 
-/**
- * 
- * @param {string} keyname : tên key của AsyncStorage
- * @returns : lấy dữ liệu từ AsyncStorage
- */
-export const retrieveData = async (keyname) => {
-    try {
-        const value = await AsyncStorage.getItem(keyname);
-        if (value !== null) {
-            if (isValidJson(value)) {
-                console.log(`Retrieved data for keyname ${keyname}:`, value);
-                return JSON.parse(value);
-            } else {
-                console.error(`retrieveData() Invalid JSON string for keyname ${keyname}:`, value);
-            }
-        } else {
-            console.log(`Data not found for keyname ${keyname}.`);
-        }
-    } catch (error) {
-        console.error('retrieveData() Error retrieving data:', error);
-    }
-}
-
-export default DATA = () => {
+// Hook để sử dụng trong components
+const DATA = () => {
+    // User placeholder - sẽ được thay thế bằng user thật từ AsyncStorage
     const placeholderUserData = {
         id: 'u1',
         name: "Nguyễn Văn A",
@@ -116,19 +71,30 @@ export default DATA = () => {
         jobAttempt: ['j1', 'j2',],
         followCompany: ['c1', 'c2',],
         companyViewCount: 2,
-    }
-    const [currentUser, setCurrentUser] = React.useState(placeholderUserData);
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const data = await retrieveData('userData');
-                setCurrentUser(data);
-            } catch (error) {
-                console.error("Error retriveing data:", error);
-            }
+    };
 
+    const [currentUser, setCurrentUser] = React.useState(placeholderUserData);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                const user = await getCurrentUser();
+                if (user) {
+                    setCurrentUser(user);
+                } else {
+                    // Nếu chưa đăng nhập, dùng placeholder
+                    setCurrentUser(placeholderUserData);
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+                setCurrentUser(placeholderUserData);
+            } finally {
+                setIsLoading(false);
+            }
         };
-        fetchData();
+        
+        loadUserData();
     }, []);
 
     let company = [
@@ -581,6 +547,15 @@ export default DATA = () => {
             notiTime: '2023-10-16T15:22:30+07:00',
             forUser: 'currentUser.id',
         }
-    ]
-    return { company, job, currentUser, notiData }
+    ];
+
+    return { 
+        company, 
+        job, 
+        currentUser, 
+        notiData,
+        isLoading 
+    };
 }
+
+export default DATA;

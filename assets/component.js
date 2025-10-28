@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, Image, FlatList, SafeAreaView, StatusBar, Switch, ScrollView, } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, Image, FlatList, StatusBar, Switch, ScrollView, } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from "./stylesheet";
 import { vw, vh, vmax, vmin } from "react-native-expo-viewport-units";
 import componentStyle, { colorStyle } from './componentStyleSheet';

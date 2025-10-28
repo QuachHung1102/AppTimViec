@@ -1,78 +1,71 @@
 import { colorStyle, useCustomFonts } from "../assets/componentStyleSheet";
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, SafeAreaView, ScrollView, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from "expo-linear-gradient";
 import { vw, vh, vmax, vmin } from "react-native-expo-viewport-units";
 import componentStyle from "../assets/componentStyleSheet";
 import styles from "../assets/stylesheet";
 import { gradientRectangle, jobNews1, marginBottomForScrollView, mostCompany, searchNav, suitableJob } from "../assets/component";
 import { editable, heartDouble, userIcon } from "../assets/svgXml";
-import DATA, { retrieveData, fetchUserData } from "../assets/DATA";
+import DATA, { fetchUserData } from "../assets/DATA";
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import { doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
-import { auth, firestore } from "../firebase";
+import { getCurrentUser, updateUser } from '../utils/AuthService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function User({ navigation }) {
-    const { currentUser } = DATA();
+    const { currentUser, isLoading } = DATA();
     const [isEditMode, setIsEditMode] = React.useState(false);
-    const [firebaseUserData, setFirebaseUserData] = React.useState(null);
-    const [firebaseUserDataLoaded, setFirebaseUserDataLoaded] = React.useState(false);
+    const [userData, setUserData] = React.useState(null);
+    const [userDataLoaded, setUserDataLoaded] = React.useState(false);
 
-    const fetchFirebase = async () => {
+    const fetchUserInfo = async () => {
         try {
-            const user = auth.currentUser;
+            const user = await getCurrentUser();
             if (user) {
-                const db = firestore;
-                const docRef = doc(db, "userList", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setFirebaseUserData(data);
-                    setNameEdit(data.name);
-                    setDobEdit(data.dob);
-                    setShowDatePicker(false);
-                    setSelectedDate(new Date());
-                    setSexEdit(data.sex);
-                    setEmailEdit(data.email);
-                    setPhoneEdit(data.phone);
-                    setAddressEdit(data.address);
-                    setDisableEdit(data.disable);
-                    setIntroEdit(data.intro);
-                    setExpEdit(data.exp);
-                    setEducationEdit(data.education);
-                    setWishnessEdit(data.wishness);
-                    setSkillEdit(data.skill);
-                    setFirebaseUserDataLoaded(true);
-                }
-            } else {
-                console.log("No user is currently signed in.");
+                setUserData(user);
+                setNameEdit(user.name || '');
+                setDobEdit(user.dob || '');
+                setShowDatePicker(false);
+                setSelectedDate(new Date());
+                setSexEdit(user.sex);
+                setEmailEdit(user.email || '');
+                setPhoneEdit(user.phone || '');
+                setAddressEdit(user.address || '');
+                setDisableEdit(user.disable || []);
+                setIntroEdit(user.intro || '');
+                setExpEdit(user.exp || []);
+                setEducationEdit(user.education || []);
+                setWishnessEdit(user.wishness || '');
+                setSkillEdit(user.skill || []);
+                setUserDataLoaded(true);
             }
         } catch (error) {
-            console.error("Error fetching document:", error);
+            console.error("Error fetching user data:", error);
         }
     };
 
     useEffect(() => {
-        if (!firebaseUserDataLoaded && isEditMode) {
-            fetchFirebase();
+        if (!userDataLoaded && isEditMode) {
+            fetchUserInfo();
         }
-    }, [firebaseUserDataLoaded, isEditMode]);
+    }, [userDataLoaded, isEditMode]);
 
-    const [nameEdit, setNameEdit] = React.useState(currentUser.name);
-    const [dobEdit, setDobEdit] = useState(currentUser.dob);
+    const [nameEdit, setNameEdit] = React.useState(currentUser?.name || '');
+    const [dobEdit, setDobEdit] = useState(currentUser?.dob || '');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [sexEdit, setSexEdit] = React.useState(currentUser.sex);
-    const [emailEdit, setEmailEdit] = React.useState(currentUser.email);
-    const [phoneEdit, setPhoneEdit] = React.useState(currentUser.phone);
-    const [addressEdit, setAddressEdit] = React.useState(currentUser.address);
-    const [disableEdit, setDisableEdit] = React.useState(currentUser.disable);
-    const [introEdit, setIntroEdit] = React.useState(currentUser.intro);
-    const [expEdit, setExpEdit] = React.useState(currentUser.exp);
-    const [educationEdit, setEducationEdit] = React.useState(currentUser.education);
-    const [wishnessEdit, setWishnessEdit] = React.useState(currentUser.wishness);
-    const [skillEdit, setSkillEdit] = React.useState(currentUser.skill);
+    const [sexEdit, setSexEdit] = React.useState(currentUser?.sex);
+    const [emailEdit, setEmailEdit] = React.useState(currentUser?.email || '');
+    const [phoneEdit, setPhoneEdit] = React.useState(currentUser?.phone || '');
+    const [addressEdit, setAddressEdit] = React.useState(currentUser?.address || '');
+    const [disableEdit, setDisableEdit] = React.useState(currentUser?.disable || []);
+    const [introEdit, setIntroEdit] = React.useState(currentUser?.intro || '');
+    const [expEdit, setExpEdit] = React.useState(currentUser?.exp || []);
+    const [educationEdit, setEducationEdit] = React.useState(currentUser?.education || []);
+    const [wishnessEdit, setWishnessEdit] = React.useState(currentUser?.wishness || '');
+    const [skillEdit, setSkillEdit] = React.useState(currentUser?.skill || []);
 
     const handleDateChange = (event, selectedDate) => {
         setShowDatePicker(false);
@@ -102,12 +95,8 @@ function User({ navigation }) {
 
     // update data to firebase
     const updateData = async () => {
-        const db = firestore;
-
         try {
-            const userRef = doc(db, "userList", currentUser.id);
-            console.log(nameEdit);
-            await updateDoc(userRef, {
+            const result = await updateUser({
                 name: nameEdit,
                 dob: dobEdit,
                 sex: sexEdit,
@@ -120,10 +109,17 @@ function User({ navigation }) {
                 education: educationEdit,
                 wishness: wishnessEdit,
                 skill: skillEdit,
-            })
+            });
 
+            if (result.success) {
+                alert('Cập nhật thành công!');
+                await fetchUserData();
+            } else {
+                alert(result.error || 'Cập nhật thất bại');
+            }
         } catch (error) {
             console.log(error);
+            alert('Có lỗi xảy ra khi cập nhật');
         }
     }
     const editMode = () => {
@@ -388,18 +384,24 @@ function User({ navigation }) {
 
 
     return (
-        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue1 }]}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue1 }]} edges={['top', 'left', 'right']}>
             <StatusBar backgroundColor={colorStyle.blue1} barStyle='light-content' />
             {searchNav('Người dùng', userIcon(vw(9), vw(9)), colorStyle.blue3, null, colorStyle.blue1)}
 
+            {isLoading ? (
+                <View style={[styles.flex1, styles.justifyContentCenter, styles.alignItemsCenter, { backgroundColor: colorStyle.blue3 }]}>
+                    <ActivityIndicator size="large" color={colorStyle.blue1} />
+                    <Text style={[componentStyle.Mon14Reg, { marginTop: 10, color: colorStyle.blue4 }]}>Đang tải...</Text>
+                </View>
+            ) : (
             <ScrollView style={[styles.flex1, styles.flexCol, styles.gap5vw, styles.w100, styles.alignSelfCenter, { backgroundColor: colorStyle.blue3, padding: '5%' }]}>
                 <View>
                     <View style={[styles.flexRow, styles.alignItemsCenter, styles.gap4vw, { paddingVertical: vw(2.75), paddingHorizontal: vw(4), borderRadius: vw(5), backgroundColor: colorStyle.white }]}>
                         <Image source={require('../assets/images/placeholder.jpg')} style={[{ width: vw(17.5), height: vw(17.5), borderRadius: vw(100), borderWidth: vw(0.5), borderColor: colorStyle.blue2 }]} />
                         <View style={[styles.flexCol, styles.gap2vw]}>
-                            <Text style={[componentStyle.Os20Bold, { color: colorStyle.blue4, }]}>{currentUser.name}</Text>
-                            <Text style={[componentStyle.Mon12Bold, { color: colorStyle.darkGray, }]}>{currentUser.id}</Text>
-                            <Text style={[componentStyle.Mon10Reg, { color: colorStyle.darkGray, }]}>Tham gia từ: {currentUser.joinDate}</Text>
+                            <Text style={[componentStyle.Os20Bold, { color: colorStyle.blue4, }]}>{currentUser?.name || 'Người dùng'}</Text>
+                            <Text style={[componentStyle.Mon12Bold, { color: colorStyle.darkGray, }]}>{currentUser?.id || 'ID'}</Text>
+                            <Text style={[componentStyle.Mon10Reg, { color: colorStyle.darkGray, }]}>Tham gia từ: {currentUser?.joinDate || 'N/A'}</Text>
                         </View>
                     </View>
                     <View style={[styles.flex1, styles.w100, styles.h100, styles.positionAbsolute, { borderRadius: vw(5), zIndex: -1, backgroundColor: colorStyle.grey, top: vw(0.75) }]}></View>
@@ -499,6 +501,7 @@ function User({ navigation }) {
                 </TouchableOpacity> */}
                 {marginBottomForScrollView()}
             </ScrollView>
+            )}
         </SafeAreaView>
     )
 }

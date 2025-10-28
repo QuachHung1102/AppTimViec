@@ -1,6 +1,7 @@
 import { colorStyle, useCustomFonts } from "../assets/componentStyleSheet";
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, SafeAreaView, ScrollView, Switch, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ImageBackground, Image, StatusBar, ScrollView, Switch, TouchableOpacity } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { vw, vh, vmax, vmin } from "react-native-expo-viewport-units";
 import componentStyle from "../assets/componentStyleSheet";
 import styles from "../assets/stylesheet";
@@ -9,8 +10,8 @@ import { editable, heartDouble, settingIcon } from "../assets/svgXml";
 import DATA from "../assets/DATA";
 import { SvgXml } from "react-native-svg";
 
-// import sign out firebase
-import { auth, firestore } from '../firebase'
+// Import Auth Service
+import { logoutUser } from '../utils/AuthService'
 import { useNavigation } from "@react-navigation/native";
 
 function Setting({ navigation }) {
@@ -19,8 +20,8 @@ function Setting({ navigation }) {
     const [isLetCompanyContact, setIsLetCompanyContact] = React.useState(false);
     const [allowEmailNotification, setAllowEmailNotification] = React.useState(false);
     return (
-        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue1 }]}>
-            <StatusBar backgroundColor={colorStyle.blue1} barStyle="light-content" />
+        <SafeAreaView style={[styles.flex1, { backgroundColor: colorStyle.blue1 }]} edges={['top', 'left', 'right']}>
+            <StatusBar backgroundColor={colorStyle.blue1} barStyle='light-content' />
             {searchNav('Cài đặt', settingIcon(vw(9), vw(9)), colorStyle.blue3, null, colorStyle.blue1)}
             <ScrollView style={[styles.flex1, styles.flexCol, styles.w100, { backgroundColor: colorStyle.blue3 }]} contentContainerStyle={[styles.alignItemsCenter, styles.gap4vw]}>
                 <View style={[styles.positionRelative, styles.w90, { margin: '5%' }]}>
@@ -142,14 +143,13 @@ function Setting({ navigation }) {
                                     <Text style={[componentStyle.Mon14Reg, { color: colorStyle.darkGray, paddingVertical: vw(2.5) }]}>Đánh giá ứng dụng </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={[{ borderBottomWidth: 1, borderColor: colorStyle.grey }]}
-                                    onPress={() => {
-                                        auth.signOut()
-                                            .then(() => {
-                                                navigation.navigate('LogReg');
-                                            })
-                                            .catch((error) => {
-                                                console.log(error);
-                                            });
+                                    onPress={async () => {
+                                        const result = await logoutUser();
+                                        if (result.success) {
+                                            navigation.navigate('LogReg');
+                                        } else {
+                                            alert('Đăng xuất thất bại');
+                                        }
                                     }}>
                                     <Text style={[componentStyle.Mon14Reg, { color: colorStyle.darkGray, paddingVertical: vw(2.5) }]}>Đăng xuất </Text>
                                 </TouchableOpacity>
